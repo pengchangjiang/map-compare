@@ -1,0 +1,10 @@
+{
+  "name": "arcgis",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "browser-sync start --server --files *.html,css/*.css,js/*.js"
+  },
+  "devDependencies": {
+    "browser-sync": "^2.18.13"
+  }
+}
