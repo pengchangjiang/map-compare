@@ -63,6 +63,13 @@
             <option value="10000">一万</option>
             <option value="15000">1.5万</option>
             <option value="20000">2万</option>
+            <option value="30000">3万</option>
+            <option value="40000">4万</option>
+            <option value="50000">5万</option>
+            <option value="100000">10万</option>
+            <option value="200000">20万</option>
+            <option value="300000">30万</option>
+            <option value="400000">40万</option>
         </select>
     </div>
     <div id="lnglat"></div>
@@ -75,13 +82,13 @@
     //circle類型1萬還是可以
     function circleChange(v) {
         if (layerGroup) layerGroup.clearLayers();
-        axios.get('data/' + v + 'points.json').then(res => {
-            var randomPoints = res.data;
-            // var randomPoints = turf.randomPoint(v, { bbox: [-90, -180, 90, 180] });
+        // axios.get('data/' + v + 'points.json').then(res => {
+            // var randomPoints = res.data;
+            var randomPoints = turf.randomPoint(v, { bbox: [-180, -90, 180, 90] });
             randomPoints.features.forEach(fea => {
-                layerGroup.addLayer(L.circle(fea.geometry.coordinates, { radius: 10 }));
+                layerGroup.addLayer(L.circle([fea.geometry.coordinates[1],fea.geometry.coordinates[0]], { radius: 10 }));
             });
-        });
+        // });
     }
 
 

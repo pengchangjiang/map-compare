@@ -1,12 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="mapbox-gl-0.4.5.0/mapbox-gl.css">
+    <script src="mapbox-gl-0.4.5.0/mapbox-gl.js"></script>
+    <script src="turf/turf.min.js"></script>
     <title>mapbox-gl</title>
+    <style>
+        #sCon,
+        #cCon,
+        #lnglat {
+            position: absolute;
+            z-index: 1000;
+        }
+
+        #sCon {
+            right: 20px;
+            top: 100px;
+        }
+
+        #cCon {
+            position: absolute;
+            left: 20px;
+            top: 100px;
+        }
+
+        #lnglat {
+            left: 20px;
+            bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
-    
+    <div id="cCon">
+        <span>circle性能测试</span>
+        <select name="cc" id="c" onchange="circleChange(this.options[this.options.selectedIndex].value)">
+            <option value="0">0</option>
+            <option value="5000">5千</option>
+            <option value="10000">一万</option>
+            <option value="15000">1.5万</option>
+            <option value="20000">2万</option>
+            <option value="30000">3万</option>
+            <option value="40000">4万</option>
+            <option value="50000">5万</option>
+            <option value="100000">10万</option>
+            <option value="200000">20万</option>
+            <option value="300000">30万</option>
+            <option value="400000">40万</option>
+        </select>
+    </div>
+    <div id="map"></div>
+    <script>
+        var map, layer;
+        var style = {
+            "version": 8,
+            "name": "Bright",
+            "sources": {
+            },
+            "center": [
+                120.69077933571157,
+                31.28099782809913
+            ],
+            "zoom": 3,
+            // "sprite": "http://localhost:8080/new-mbg/sprites/sprite",
+            // "glyphs": "http://localhost:8080/new-mbg/glyphs/{fontstack}/{range}.pbf",
+            "layers": [{
+                "type": "background",
+                "layout": {
+                    "visibility": "visible"
+                },
+                "paint": {
+                    "background-color": "#87c2e4"
+                },
+                "id": "0"
+            }]
+        };
+        function initMap() {
+            if (!mapboxgl.supported()) {
+                console.error("您的浏览器不支持WebGL,请升级到最新版本。");
+                return;
+            }
+            map = new mapboxgl.Map({
+                container: "map",
+                style: style
+            });
+            map.on('load', function () {
+                map.addSource('pointsSource', { type: 'geojson', data: null })
+                map.addLayer({
+                    id: 'points',
+                    type: 'circle',
+                    source: 'pointsSource',
+                    layout: { visibility: 'visible' },
+                    paint: { 'circle-radius': 5, 'circle-color': '#0ff', 'circle-opacity': 0.8, 'circle-stroke-color': '#f00' }
+                });
+            });
+
+        }
+
+        initMap();
+        function circleChange(v) {
+            var randomPoints = turf.randomPoint(v, { bbox: [-180, -90, 180, 90] });
+            map.getSource('pointsSource').setData(randomPoints);
+        }
+    </script>
 </body>
+
 </html>

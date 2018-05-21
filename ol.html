@@ -1,12 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="v4.6.5-dist/ol.css">
+    <script src="v4.6.5-dist/ol-debug.js"></script>
+    <script src="js/axios.js"></script>
+    <script src="turf/turf.min.js"></script>
     <title>OL示例</title>
+    <style>
+        #sCon,
+        #cCon,
+        #lnglat {
+            position: absolute;
+            z-index: 1000;
+        }
+
+        #sCon {
+            right: 20px;
+            top: 100px;
+        }
+
+        #cCon {
+            position: absolute;
+            left: 20px;
+            top: 100px;
+        }
+
+        #lnglat {
+            left: 20px;
+            bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
-    
+    <div id="cCon">
+        <span>circle性能测试</span>
+        <select name="cc" id="c" onchange="circleChange(this.options[this.options.selectedIndex].value)">
+            <option value="0">0</option>
+            <option value="5000">5千</option>
+            <option value="10000">一万</option>
+            <option value="15000">1.5万</option>
+            <option value="20000">2万</option>
+            <option value="30000">3万</option>
+            <option value="40000">4万</option>
+            <option value="50000">5万</option>
+            <option value="100000">10万</option>
+            <option value="200000">20万</option>
+            <option value="300000">30万</option>
+            <option value="400000">40万</option>
+        </select>
+    </div>
+    <div id="lnglat"></div>
+    <div id="map" class="map"></div>
+    <script type="text/javascript">
+
+        var mousePositionControl = new ol.control.MousePosition({
+            coordinateFormat: ol.coordinate.createStringXY(4),
+            projection: 'EPSG:4326',
+            // comment the following two lines to have the mouse position
+            // be placed within the map.
+            className: 'custom-mouse-position',
+            target: document.getElementById('lnglat'),
+            undefinedHTML: '&nbsp;'
+        });
+        var map = new ol.Map({
+            target: 'map',
+            // layers: [
+            //     new ol.layer.Tile({
+            //         source: new ol.source.OSM()
+            //     })
+            // ],
+            view: new ol.View({
+                center: [0, 0],
+                zoom: 2,
+                projection: "EPSG:4326"
+            }),
+            controls: ol.control.defaults({
+                attributionOptions: {
+                    collapsible: false
+                }
+            }).extend([mousePositionControl]),
+        });
+        var layer;
+        var image = new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({ color: 'rgba(255, 255, 0, 0.8)'}),
+            stroke: new ol.style.Stroke({ color: 'red', width: 1 })
+        });
+
+        var styles = {
+            'Point': new ol.style.Style({
+                image: image
+            }),
+            'LineString': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'green',
+                    width: 1
+                })
+            }),
+            'MultiLineString': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'green',
+                    width: 1
+                })
+            }),
+            'MultiPoint': new ol.style.Style({
+                image: image
+            }),
+            'MultiPolygon': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'yellow',
+                    width: 1
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 255, 0, 0.1)'
+                })
+            }),
+            'Polygon': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'blue',
+                    lineDash: [4],
+                    width: 3
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 255, 0.1)'
+                })
+            }),
+            'GeometryCollection': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'magenta',
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'magenta'
+                }),
+                image: new ol.style.Circle({
+                    radius: 10,
+                    fill: null,
+                    stroke: new ol.style.Stroke({
+                        color: 'magenta'
+                    })
+                })
+            }),
+            'Circle': new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'red',
+                    width: 2
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(255,0,0,0.2)'
+                })
+            })
+        };
+
+        var styleFunction = function (feature) {
+            return styles[feature.getGeometry().getType()];
+        };
+
+        function circleChange(v) {
+            if (layer) map.removeLayer(layer);
+            // axios.get('data/' + v + 'points.json').then(res => {
+                // axios.get('data/test.json').then(res => {
+                // var geojsonObject = res.data;
+                var geojsonObject = turf.randomPoint(v, { bbox: [-180, -90, 180, 90] });
+                // var randomPoints = turf.randomPoint(v, { bbox: [-90, -180, 90, 180] });
+                // randomPoints.features.forEach(fea => {
+                //     layerGroup.addLayer(L.circle(fea.geometry.coordinates, { radius: 10 }));
+                // });
+                // var geojsonFormat = new ol.format.GeoJSON();
+                // var feas = geojsonFormat.readFeatures(geojsonObject);
+                var vectorSource = new ol.source.Vector({
+                    wrapX: false,
+                    features: (new ol.format.GeoJSON()).readFeatures(geojsonObject)//,{"dataProjection": 'EPSG:4326', "featureProjection": 'EPSG:3857' })
+                });
+
+                var vectorLayer = new ol.layer.Vector({
+                    source: vectorSource,
+                    style: styleFunction
+                });
+                map.addLayer(vectorLayer);
+            // });
+        }
+
+
+        // var geojsonObject = {
+        //     'type': 'FeatureCollection',
+        //     'crs': {
+        //         'type': 'name',
+        //         'properties': {
+        //             'name': 'EPSG:3857'
+        //         }
+        //     },
+        //     'features': [{
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'Point',
+        //             'coordinates': [0, 0]
+        //         }
+        //     }, {
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'LineString',
+        //             'coordinates': [[4e6, -2e6], [8e6, 2e6]]
+        //         }
+        //     }, {
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'LineString',
+        //             'coordinates': [[4e6, 2e6], [8e6, -2e6]]
+        //         }
+        //     }, {
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'Polygon',
+        //             'coordinates': [[[-5e6, -1e6], [-4e6, 1e6], [-3e6, -1e6]]]
+        //         }
+        //     }, {
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'MultiLineString',
+        //             'coordinates': [
+        //                 [[-1e6, -7.5e5], [-1e6, 7.5e5]],
+        //                 [[1e6, -7.5e5], [1e6, 7.5e5]],
+        //                 [[-7.5e5, -1e6], [7.5e5, -1e6]],
+        //                 [[-7.5e5, 1e6], [7.5e5, 1e6]]
+        //             ]
+        //         }
+        //     }, {
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'MultiPolygon',
+        //             'coordinates': [
+        //                 [[[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6], [-3e6, 6e6]]],
+        //                 [[[-2e6, 6e6], [-2e6, 8e6], [0, 8e6], [0, 6e6]]],
+        //                 [[[1e6, 6e6], [1e6, 8e6], [3e6, 8e6], [3e6, 6e6]]]
+        //             ]
+        //         }
+        //     }, {
+        //         'type': 'Feature',
+        //         'geometry': {
+        //             'type': 'GeometryCollection',
+        //             'geometries': [{
+        //                 'type': 'LineString',
+        //                 'coordinates': [[-5e6, -5e6], [0, -5e6]]
+        //             }, {
+        //                 'type': 'Point',
+        //                 'coordinates': [4e6, -5e6]
+        //             }, {
+        //                 'type': 'Polygon',
+        //                 'coordinates': [[[1e6, -6e6], [2e6, -4e6], [3e6, -6e6]]]
+        //             }]
+        //         }
+        //     }]
+        // };
+
+        // var vectorSource = new ol.source.Vector({
+        //     features: (new ol.format.GeoJSON()).readFeatures(geojsonObject, { dataProjection: 'EPSG:3857', featureProjection: 'EPSG:3857' })
+        // });
+
+        // var vectorLayer = new ol.layer.Vector({
+        //     source: vectorSource,
+        //     style: styleFunction
+        // });
+        // map.addLayer(vectorLayer);
+    </script>
 </body>
+
 </html>
