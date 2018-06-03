@@ -52,11 +52,25 @@
             <option value="200000">20万</option>
             <option value="300000">30万</option>
             <option value="400000">40万</option>
+            <option value="500000">50万</option>
+            <option value="600000">60万</option>
+            <option value="700000">70万</option>
+            <option value="10000000">100万</option>
+
         </select>
+
+        <div id="play" style="cursor: pointer;" onclick="startFly()">点我开始飞行</div>
     </div>
     <div id="map"></div>
     <script>
         var map, layer;
+        // 1:"http://vt.geo-compass.com/api/v1/symbol/74/90/sprite",
+        // 2:"http://vt.geo-compass.com/api/v1/symbol/74/94/sprite",
+        var spriteUrl = "http://vt.geo-compass.com/api/v1/symbol/74/94/sprite";
+        // 1:"airplane"
+        // 2:"mh5"
+        var iconImage = "mh1";
+
         var style = {
             "version": 8,
             "name": "Bright",
@@ -68,6 +82,7 @@
             ],
             "zoom": 3,
             // "sprite": "http://localhost:8080/new-mbg/sprites/sprite",
+            "sprite": spriteUrl,
             // "glyphs": "http://localhost:8080/new-mbg/glyphs/{fontstack}/{range}.pbf",
             "layers": [{
                 "type": "background",
@@ -78,8 +93,49 @@
                     "background-color": "#87c2e4"
                 },
                 "id": "0"
-            }]
+            }, {
+                "type": "fill",
+                "source": "航图字段图标2",
+                "source-layer": "2356_boundair",
+                "maxzoom": 20,
+                "layout": {
+                    "visibility": "visible"
+                },
+                "paint": {
+                    "fill-color": "#97FDCC",
+                    "fill-opacity": 0.3,
+                    "fill-outline-color": "#30E1BE",
+                    "fill-antialias": false,
+                    "fill-translate": [
+                        0,
+                        0
+                    ],
+                    "fill-translate-anchor": "map"
+                },
+                "id": "2",
+                "filter": [
+                    "all"
+                ]
+            }, {
+                id: "1",
+                type: "fill-extrusion",
+                source: '航图字段图标2',
+                "source-layer": "2356_boundair",
+                paint: {
+                    'fill-extrusion-color': '#f00',
+                    'fill-extrusion-height': ['get', 'vertical_l'],
+                    'fill-extrusion-opacity': 0.5,
+                    // 'fill-extrusion-base':10000
+                }
+            }],
+            sources: {
+                "航图字段图标2": {
+                    "url": "http://vt.geo-compass.com/api/v1/tileset/1/266",
+                    "type": "vector"
+                }
+            }
         };
+
         function initMap() {
             if (!mapboxgl.supported()) {
                 console.error("您的浏览器不支持WebGL,请升级到最新版本。");
@@ -87,7 +143,14 @@
             }
             map = new mapboxgl.Map({
                 container: "map",
-                style: style
+                style: style,
+                bearing: 68,
+                pitch: 55,
+                zoom: 8,
+                center: [
+                    113.149372,
+                    37.96928507
+                ]
             });
             map.on('load', function () {
                 map.addSource('pointsSource', { type: 'geojson', data: null })
@@ -98,6 +161,9 @@
                     layout: { visibility: 'visible' },
                     paint: { 'circle-radius': 5, 'circle-color': '#0ff', 'circle-opacity': 0.8, 'circle-stroke-color': '#f00' }
                 });
+
+                addRoute();
+                addPoint();
             });
 
         }
@@ -107,6 +173,112 @@
             var randomPoints = turf.randomPoint(v, { bbox: [-180, -90, 180, 90] });
             map.getSource('pointsSource').setData(randomPoints);
         }
+
+
+        //道路数据
+        var route = { "type": "Feature", "geometry": { "type": "LineString", "coordinates": [[112.5456742311822, 37.655354533545946], [113.90295844659123, 38.250219785003516], [115.31278909254567, 38.7439579437133], [116.29431675745066, 39.09492844207327], [116.24077888481948, 38.7439579437133], [114.95586994167112, 36.328805022795564]] }, "properties": { "Id": 0 } };
+
+
+        var point = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": route.geometry.coordinates[0]
+            },
+            properties: { bearing: 0 }
+        }
+
+        //将道路数据加入到地图中
+        function addRoute() {
+            map.addLayer({
+                "id": "route",
+                "type": "line",
+                "source": {
+                    "type": "geojson",
+                    "data": route
+                },
+                "layout": {
+                    "line-join": "round",
+                    "line-cap": "round"
+                },
+                "paint": {
+                    "line-color": "#888",
+                    "line-width": 8
+                }
+            });
+        }
+
+
+        //飞机点
+        function addPoint() {
+            map.addSource('point', {
+                "type": "geojson",
+                "data": point
+            });
+            map.addLayer({
+                "id": "point",
+                "source": "point",
+                "type": "symbol",
+                "layout": {
+                    "icon-image": iconImage,
+                    "icon-rotate": ["get", "bearing"],
+                    "icon-rotation-alignment": "map",
+                    "icon-allow-overlap": true
+                }
+            });
+        }
+        //假如速度10m/s=36km/h,
+        var speed = 0.3;//速度
+        var dis = 0;//已经走的路程
+        var counter = 0;
+        var totalDis = turf.length(route, { units: 'kilometers' });
+        var lastPoint = route.geometry.coordinates[0];
+        var currPoint = route.geometry.coordinates[0];
+        function animate() {
+            dis = counter * speed;
+            lastPoint = point.geometry.coordinates;
+            if (dis > totalDis) {//将到达终点
+                point.geometry.coordinates = route.geometry.coordinates[route.geometry.coordinates.length - 1];
+            } else {
+                point.geometry.coordinates = turf.along(route, dis, { units: 'kilometers' }).geometry.coordinates;
+            }
+            currPoint = point.geometry.coordinates;
+            //计算角度
+            point.properties.bearing = turf.bearing(
+                turf.point(lastPoint), turf.point(currPoint)
+            );
+            //更新点
+            map.getSource('point').setData(point);
+            cameraFlow(point);
+
+            if (dis < totalDis) {
+                requestAnimationFrame(animate);
+            }
+            counter++;
+        }
+
+        function startFly() {
+            point.geometry.coordinates = route.geometry.coordinates[0];
+            map.getSource('point').setData(point);
+            counter = 0;
+            var lastPoint = route.geometry.coordinates[0];
+            var currPoint = route.geometry.coordinates[0];
+            animate();
+        }
+
+
+        //镜头跟着动
+        function easing(t) {
+            return t * (2 - t);
+        }
+        function cameraFlow(point) {
+            map.easeTo({
+                center: point.geometry.coordinates,
+                bearing: point.properties.bearing,
+                easing: easing
+            });
+        }
+
     </script>
 </body>
 
