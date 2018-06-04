@@ -84,6 +84,7 @@
             // "sprite": "http://localhost:8080/new-mbg/sprites/sprite",
             "sprite": spriteUrl,
             // "glyphs": "http://localhost:8080/new-mbg/glyphs/{fontstack}/{range}.pbf",
+            "glyphs": "http://vt.geo-compass.com/api/v1/font/24/{fontstack}/{range}.pbf",
             "layers": [{
                 "type": "background",
                 "layout": {
@@ -222,7 +223,7 @@
                 "layout": {
                     "icon-image": iconImage,
                     "icon-rotate": ["get", "bearing"],
-                    "icon-rotation-alignment": "map",
+                    // "icon-rotation-alignment": "map",
                     "icon-allow-overlap": true
                 }
             });
