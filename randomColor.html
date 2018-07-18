@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+
+<body>
+    <button id="btn1">调用第一种</button>
+    <button id="bnt2">调用第二种</button>
+    <button id="btn3">调用第三种</button>
+    <script>
+        var btn1 = document.getElementById('btn1');
+        btn1.onclick = function () {
+            document.body.style.background = bg1()
+        };
+        var btn2 = document.getElementById('bnt2');
+        btn2.onclick = function () {
+            document.body.style.background = bg2();
+        };
+        var btn3 = document.getElementById('btn3');
+        btn3.onclick = function () {
+            document.body.style.background = bg3();
+        };
+        function bg1() {
+            var c = '#' + Math.floor(Math.random() * 256).toString(10)
+            console.log(c);
+            return c;
+        }
+        function bg2() {
+            var c = '#' + Math.floor(Math.random() * 0xffffff).toString(16);
+            console.log(c);
+            return c;
+        }
+        function bg3() {
+            var r = Math.floor(Math.random() * 256);
+            var g = Math.floor(Math.random() * 256);
+            var b = Math.floor(Math.random() * 256);
+            return "rgb(" + r + ',' + g + ',' + b + ")";//所有方法的拼接都可以用ES6新特性`其他字符串{$变量名}`替换
+        }
+    </script>
+</body>
+
+</html>

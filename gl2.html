@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="mapbox-gl-0.4.5.0/mapbox-gl.css">
+    <script src="mapbox-gl-0.4.5.0/mapbox-gl.js"></script>
+    <script src="turf/turf.min.js"></script>
+    <title>线动画</title>
+    <style>
+        #sCon,
+        #cCon,
+        #lnglat {
+            position: absolute;
+            z-index: 1000;
+        }
+
+        #sCon {
+            right: 20px;
+            top: 100px;
+        }
+
+        #cCon {
+            position: absolute;
+            left: 20px;
+            top: 100px;
+        }
+
+        #lnglat {
+            left: 20px;
+            bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="lnglat"></div>
+    <div id="cCon">
+        <div>
+            <button onclick="query()">测试query</button>
+        </div>
+        <span>线数量</span>
+        <select name="cc" id="c" onchange="countChange(this.options[this.options.selectedIndex].value)">
+            <option value="0">0</option>
+            <option value="100">1百</option>
+            <option value="200">2百</option>
+            <option value="300">3百</option>
+            <option value="400">4百</option>
+            <option value="500">5百</option>
+            <option value="600">6百</option>
+            <option value="700">7百</option>
+            <option value="800">8百</option>
+            <option value="900">9百</option>
+            <option value="1000">1千</option>
+            <option value="2000">2千</option>
+        </select>
+    </div>
+    <div id="map"></div>
+    <script>
+        var map, layer;
+        var style = {
+            "version": 8,
+            "name": "Bright",
+            "sources": {
+            },
+            "center": [
+                108.35634196000183,
+                33.4908120773096
+            ],
+            "zoom": 4,
+            // "sprite": "http://localhost:8080/new-mbg/sprites/sprite",
+            // "glyphs": "http://localhost:8080/new-mbg/glyphs/{fontstack}/{range}.pbf",
+            "layers": [{
+                "type": "background",
+                "layout": {
+                    "visibility": "visible"
+                },
+                "paint": {
+                    "background-color": "#87c2e4"
+                },
+                "id": "0"
+            }]
+        };
+        function randomColor() {
+            return '#' + Math.floor(Math.random() * 0xf).toString(16) +
+                Math.floor(Math.random() * 0xf).toString(16) +
+                Math.floor(Math.random() * 0xf).toString(16);
+        }
+        var shPoints = {
+            "type": "FeatureCollection",
+            "name": "sh",
+            "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+            "features": [
+                { "type": "Feature", "properties": { "name": "乌鲁木齐", "id": 0 }, "geometry": { "type": "Point", "coordinates": [87.576105814001494, 43.78176562415252] } },
+                { "type": "Feature", "properties": { "name": "拉萨", "id": 0 }, "geometry": { "type": "Point", "coordinates": [91.163128364151362, 29.710352718493823] } },
+                { "type": "Feature", "properties": { "name": "西宁", "id": 0 }, "geometry": { "type": "Point", "coordinates": [101.797122761660248, 36.593385260092958] } },
+                { "type": "Feature", "properties": { "name": "兰州", "id": 0 }, "geometry": { "type": "Point", "coordinates": [103.584065276813178, 36.11884541226506] } },
+                { "type": "Feature", "properties": { "name": "成都", "id": 0 }, "geometry": { "type": "Point", "coordinates": [104.035277402377702, 30.714088182362978] } },
+                { "type": "Feature", "properties": { "name": "重庆", "id": 0 }, "geometry": { "type": "Point", "coordinates": [106.51881874175389, 29.478873219838452] } },
+                { "type": "Feature", "properties": { "name": "贵阳", "id": 0 }, "geometry": { "type": "Point", "coordinates": [106.667779092029534, 26.457344117822409] } },
+                { "type": "Feature", "properties": { "name": "昆明", "id": 0 }, "geometry": { "type": "Point", "coordinates": [102.726590312873128, 24.969452257899565] } },
+                { "type": "Feature", "properties": { "name": "银川", "id": 0 }, "geometry": { "type": "Point", "coordinates": [106.166905610255995, 38.598221419683654] } },
+                { "type": "Feature", "properties": { "name": "西安", "id": 0 }, "geometry": { "type": "Point", "coordinates": [108.966745106591034, 34.275934651134193] } },
+                { "type": "Feature", "properties": { "name": "南宁", "id": 0 }, "geometry": { "type": "Point", "coordinates": [108.233607048417568, 22.748434858821387] } },
+                { "type": "Feature", "properties": { "name": "海口", "id": 0 }, "geometry": { "type": "Point", "coordinates": [110.345809290963103, 19.970139809833395] } },
+                { "type": "Feature", "properties": { "name": "广州", "id": 0 }, "geometry": { "type": "Point", "coordinates": [113.226229977755679, 23.183209308605857] } },
+                { "type": "Feature", "properties": { "name": "长沙", "id": 0 }, "geometry": { "type": "Point", "coordinates": [112.947463397699906, 28.169918430338605] } },
+                { "type": "Feature", "properties": { "name": "南昌", "id": 0 }, "geometry": { "type": "Point", "coordinates": [115.893170623666805, 28.652363333398512] } },
+                { "type": "Feature", "properties": { "name": "福州", "id": 0 }, "geometry": { "type": "Point", "coordinates": [119.246151757545178, 26.070847992007884] } },
+                { "type": "Feature", "properties": { "name": "台北", "id": 0 }, "geometry": { "type": "Point", "coordinates": [121.502900718052871, 25.008394332833536] } },
+                { "type": "Feature", "properties": { "name": "杭州", "id": 0 }, "geometry": { "type": "Point", "coordinates": [120.182380851874797, 30.330559528498597] } },
+                { "type": "Feature", "properties": { "name": "上海", "id": 0 }, "geometry": { "type": "Point", "coordinates": [121.44900258507036, 31.253319501841506] } },
+                { "type": "Feature", "properties": { "name": "武汉", "id": 0 }, "geometry": { "type": "Point", "coordinates": [114.216086885427458, 30.57919502873618] } },
+                { "type": "Feature", "properties": { "name": "合肥", "id": 0 }, "geometry": { "type": "Point", "coordinates": [117.261703159191569, 31.838274819794638] } },
+                { "type": "Feature", "properties": { "name": "南京", "id": 0 }, "geometry": { "type": "Point", "coordinates": [118.805051094586801, 32.08494477336037] } },
+                { "type": "Feature", "properties": { "name": "郑州", "id": 0 }, "geometry": { "type": "Point", "coordinates": [113.650581240894766, 34.746135180475399] } },
+                { "type": "Feature", "properties": { "name": "济南", "id": 0 }, "geometry": { "type": "Point", "coordinates": [117.047703940554442, 36.608204091247408] } },
+                { "type": "Feature", "properties": { "name": "石家庄", "id": 0 }, "geometry": { "type": "Point", "coordinates": [114.477650367235597, 38.033020470240309] } },
+                { "type": "Feature", "properties": { "name": "太原", "id": 0 }, "geometry": { "type": "Point", "coordinates": [112.482561678243812, 37.798145224231845] } },
+                { "type": "Feature", "properties": { "name": "呼和浩特", "id": 0 }, "geometry": { "type": "Point", "coordinates": [111.842298064144288, 40.895407139857419] } },
+                { "type": "Feature", "properties": { "name": "天津", "id": 0 }, "geometry": { "type": "Point", "coordinates": [117.350438121267558, 38.925454194890627] } },
+                { "type": "Feature", "properties": { "name": "沈阳", "id": 0 }, "geometry": { "type": "Point", "coordinates": [123.295438289431658, 41.801305837579086] } },
+                { "type": "Feature", "properties": { "name": "长春", "id": 0 }, "geometry": { "type": "Point", "coordinates": [125.260470310157658, 43.981647552913678] } },
+                { "type": "Feature", "properties": { "name": "哈尔滨", "id": 0 }, "geometry": { "type": "Point", "coordinates": [126.566119531778753, 45.693444051630244] } },
+                { "type": "Feature", "properties": { "name": "北京", "id": 1 }, "geometry": { "type": "Point", "coordinates": [116.067649010579913, 39.891928821865768] } },
+                { "type": "Feature", "properties": { "name": "香港", "id": 0 }, "geometry": { "type": "Point", "coordinates": [114.092644528185303, 22.428014345108792] } },
+                { "type": "Feature", "properties": { "name": "澳门", "id": 0 }, "geometry": { "type": "Point", "coordinates": [113.552024500385599, 22.184661704224624] } }
+            ]
+        }
+            ;
+        var layerids = [];
+        function query() {
+            // var points = map.querySourceFeatures('pointsSource');
+            // console.log(points)
+
+            var polygon = map.querySourceFeatures('polygonSource');
+            console.log(polygon);
+            var id = 'polygonTemp';
+            // layerids.forEach(id => {
+            //     if (map.getLayer(id))
+            //         map.removeLayer(id)
+            // });
+
+            for (var i = 0, len = layerids.length; i < len; i++) {
+                if (map.getLayer(layerids[i])) {
+                    map.removeLayer(layerids[i]);
+                    map.removeSource(layerids[i]);
+                }
+            }
+            layerids = [];
+            polygon.forEach((p, i) => {
+                var lyid = id + i;
+                map.addSource(lyid, { type: 'geojson', data: p });
+                layerids.push(lyid);
+                map.addLayer({
+                    id: lyid,
+                    type: 'fill',
+                    source: lyid,
+                    paint: {
+                        'fill-color': randomColor(),
+                        'fill-outline-color': randomColor(),
+                        "fill-opacity": 0.4
+                    }
+                })
+            })
+
+
+        }
+        var op = { units: 'kilometers' };
+        var dis = 0;
+        var speed = 5;
+        var counter = 1;
+        var overCount = 0;
+        function initFlags() {
+            counter = 1;
+            overCount = 0;
+        }
+        function initMap() {
+            if (!mapboxgl.supported()) {
+                console.error("您的浏览器不支持WebGL,请升级到最新版本。");
+                return;
+            }
+            map = new mapboxgl.Map({
+                container: "map",
+                style: style
+            });
+            map.showTileBoundaries = true
+            map.on('mousemove', function (e) {
+                var lng = e.lngLat.lng.toFixed(2);
+                var lat = e.lngLat.lat.toFixed(2);
+                document.getElementById('lnglat').innerHTML = lng + ", " + lat;
+            });
+
+            // lineSource = { "type": "FeatureCollection", features: [] };
+            lineSource = turf.randomLineString(5, { bbox: [70, 15, 50, 48] });
+            polygonSource = turf.randomPolygon(1, { bbox: [70, 15, 50, 48] });
+
+            map.on('load', function () {
+                map.addSource('pointsSource', { type: 'geojson', data: shPoints })
+                map.addLayer({
+                    id: 'points',
+                    type: 'circle',
+                    source: 'pointsSource',
+                    layout: { visibility: 'visible' },
+                    paint: { 'circle-radius': 5, 'circle-color': '#0ff', 'circle-opacity': 0.8, 'circle-stroke-color': '#f00' }
+                });
+
+                map.addSource('lineSource', { type: 'geojson', data: lineSource })
+                map.addLayer({
+                    id: 'line',
+                    type: 'line',
+                    source: 'lineSource',
+                    "layout": {
+                        "line-join": "round",
+                        "line-cap": "round"
+                    },
+                    paint: { 'line-width': 5, 'line-color': '#00f' }
+                });
+
+                map.addSource('polygonSource', { type: 'geojson', data: polygonSource })
+                map.addLayer({
+                    id: "polygon",
+                    // type: 'fill',
+                    type: 'line',
+                    source: 'polygonSource',
+                    // paint: {
+                    //     'fill-color': '#f00',
+                    //     'fill-outline-color': '#f00',
+                    //     "fill-opacity": 0.3
+                    // }
+
+                    paint: { 'line-width': 5, 'line-color': '#00f' }
+                })
+
+
+                map.addLayer({
+                    id: 'world',
+                    type: 'line',
+                    source: {
+                        type: 'geojson',
+                        data: turf.lineString([[-180, 84], [-180, -84], [180, -84], [180, 84], [-180, 84]])
+                    },
+                    paint: { 'line-width': 2, 'line-color': '#f00' }
+                })
+            });
+        }
+        initMap();
+        function start(count) {
+            //添加基础线
+            var lineObj = buildLines(count);
+            var lines = lineObj.lines;
+            var drawLines = lineObj.drawLines;
+            initFlags();
+            prepareAnimate(lines, drawLines);
+        }
+        function countChange(v) {
+            lineSource.features = [];
+            map.getSource('lineSource').setData(lineSource);
+            if (v == 0) return;
+            start(v);
+        }
+
+
+        function prepareAnimate(lines, drawLines) {
+            var totalDisArr = []// turf.length(route, { units: 'kilometers' });
+            // var lastPointArr = []//route.geometry.coordinates[0];
+            // var currPointArr = []//route.geometry.coordinates[0];
+            var disArr = [];
+            lines.forEach(function (line) {
+                var totalDis = turf.length(line, op);
+                totalDisArr.push(totalDis);
+                // lastPointArr.push(line.geometry.coordinates[0]);
+                // currPointArr.push(line.geometry.coordinates[0]);
+            });
+            animate(lines, drawLines, totalDisArr);
+        }
+
+        function animate(lines, drawLines, totalDisArr) {
+            dis = counter * speed;
+            lines.forEach(function (line, index) {
+                // var index = 0;
+                var line = lines[index];
+                var drawLine = drawLines[index];
+                //如果这条线已经绘制完成
+                if (drawLine.properties.over) return;
+                if (dis < totalDisArr[index]) {
+                    var coordinates = turf.along(line, dis, op).geometry.coordinates;
+                    if (counter == 1) drawLine.geometry.coordinates[1] = coordinates;
+                    else drawLine.geometry.coordinates.push(coordinates);
+                } else {
+                    console.log('结束');
+                    drawLine.properties.over = true;
+                    overCount++
+                }
+            });
+            counter++;
+            lineSource.features = drawLines;
+            map.getSource('lineSource').setData(lineSource);
+            if (overCount < lines.length) {
+                requestAnimationFrame(function () {
+                    animate(lines, drawLines, totalDisArr);
+                });
+            }
+        }
+
+        function _buildLine() {
+
+        }
+        function buildLines(count) {
+            var lines = [];
+            var drawLines = [];
+            var len = shPoints.features.length;
+            for (var i = 0; i < len; i++) {
+                for (var j = i + 1; j < len; j++) {
+                    var line = turf.lineString(
+                        [shPoints.features[i].geometry.coordinates,
+                        shPoints.features[j].geometry.coordinates],
+                        {
+                            from: shPoints.features[i].properties.name,
+                            to: shPoints.features[j].properties.name
+                        });
+                    lines.push(line);
+
+                    var line2 = turf.lineString(
+                        [shPoints.features[i].geometry.coordinates,
+                        shPoints.features[j].geometry.coordinates],
+                        {
+                            from: shPoints.features[i].properties.name,
+                            to: shPoints.features[j].properties.name,
+                            over: false
+                        });
+                    drawLines.push(line2);
+                }
+            }
+            // for (var i = 0; i < count; i++) {
+            //     var index1 = Math.floor(Math.random() * (len));
+            //     var index2 = Math.floor(Math.random() * (len));
+            //     while (index1 == index2) {
+            //         var index2 = Math.floor(Math.random() * (len));
+            //     }
+            //     var line = turf.lineString([shPoints.features[index1].geometry.coordinates, shPoints.features[index2].geometry.coordinates], { from: shPoints.features[index1].properties.name, to: shPoints.features[index2].properties.name })
+            //     lines.push(line);
+
+            //     var line2 = turf.lineString([shPoints.features[index1].geometry.coordinates, shPoints.features[index2].geometry.coordinates],
+            //         {
+            //             from: shPoints.features[index1].properties.name,
+            //             to: shPoints.features[index2].properties.name,
+            //             over: false
+            //         })
+            //     drawLines.push(line2);
+            // }
+            return { lines: lines, drawLines: drawLines };
+        }
+
+
+    </script>
+</body>
+
+</html>

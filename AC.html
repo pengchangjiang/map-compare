@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>排列组合计算</title>
+</head>
+
+<body>
+    <script>
+        var array = [1, 2, 3, 4, 5];
+        // var array = [{ a: 1 }, { b: 2 }, { c: 3 }, { d: 4 }, { e: 5 }];
+        for (var i = 0; i < array.length; i++) {
+            for (var j = i + 1; j < array.length; j++) {
+                console.log([array[i], array[j]]);
+            }
+        }
+
+    </script>
+
+
+    <script>
+        function queue(arr, size) {
+            if (size > arr.length) { return; }
+            var allResult = [];
+            (function (arr, size, result) {
+                if (result.length == size) {
+                    allResult.push(result);
+                } else {
+                    for (var i = 0, len = arr.length; i < len; i++) {
+                        var newArr = [].concat(arr),
+                            curItem = newArr.splice(i, 1);
+                        arguments.callee(newArr, size, [].concat(result, curItem));
+                    }
+                }
+            })(arr, size, []);
+
+            return allResult;
+        }
+
+
+        function choose(arr, size) {
+            var allResult = [];
+
+            (function (arr, size, result) {
+                var arrLen = arr.length;
+                if (size > arrLen) {
+                    return;
+                }
+                if (size == arrLen) {
+                    allResult.push([].concat(result, arr))
+                } else {
+                    for (var i = 0; i < arrLen; i++) {
+                        var newResult = [].concat(result);
+                        newResult.push(arr[i]);
+
+                        if (size == 1) {
+                            allResult.push(newResult);
+                        } else {
+                            var newArr = [].concat(arr);
+                            newArr.splice(0, i + 1);
+                            arguments.callee(newArr, size - 1, newResult);
+                        }
+                    }
+                }
+            })(arr, size, []);
+
+            return allResult;
+        }
+
+        function showResult(result) {
+            console.log('The number of result sets: ' + result.length);
+            for (var i = 0, len = result.length; i < len; i++) {
+                console.log(result[i]);
+            }
+        }
+
+
+        var arr = ['姬光', '王子', '三桂', '科长'];
+
+        showResult(choose(arr, 4));
+        showResult(queue(arr, 4));  
+    </script>
+
+    <script>
+        //深层克隆复制
+        var deepCoby = function (obj) { //obj 要clone的对象
+            // Handle the 3 simple types, and null or undefined
+            if (null == obj || "object" != typeof obj)
+                return obj; //return表示clone对象
+            // Handle Date
+            if (obj instanceof Date) {
+                var copy = new Date();
+                copy.setTime(obj.getTime());
+                return copy;
+            }
+            // Handle Array
+            if (obj instanceof Array) {
+                var copy = [];
+                for (var i = 0, len = obj.length; i < len; ++i) {
+                    copy[i] = this.deepCoby(obj[i]);
+                }
+                return copy;
+            }
+            // Handle Object
+            if (obj instanceof Object) {
+                var copy = {};
+                for (var attr in obj) {
+                    if (obj.hasOwnProperty(attr)) copy[attr] = this.deepCoby(obj[attr]);
+                }
+                return copy;
+            }
+            throw new Error("Unable to copy obj! Its type isn't supported.");
+        }
+
+        function plzh(selfs, arr, indexs, total, where) {
+            if (selfs != null && arr.length >= selfs.length) {
+                if (where < selfs.length - 1) { //非末位
+                    var index = indexs[where];
+                    if (index == arr.length) { //非末位末尾
+                        --where;
+                        if (where == -1) { //首位超出
+                            return;
+                        } else {
+                            indexs[where] = indexs[where] + 1;
+                            for (var i = where + 1; i < elfs.length; i++) {
+                                indexs[i] = indexs[i - 1] + 1;
+                            }
+                            plzh(selfs, arr, indexs, total, where);
+                        }
+                    } else {
+                        selfs[where] = arr[index];
+                        plzh(selfs, arr, indexs, total, ++where);
+                    }
+                } else { //末位
+                    var index = indexs[where];
+                    if (index == arr.length) {  //直接末位末尾
+                        --where;
+                        if (where == -1) { //末位超出即 单关
+                            return;
+                        }
+                        indexs[where] = indexs[where] + 1;
+                        for (var i = where + 1; i < selfs.length; i++) {
+                            indexs[i] = indexs[i - 1] + 1;
+                        }
+                        plzh(selfs, arr, indexs, total, where);
+                    } else {
+                        selfs[where] = arr[index];
+                        total.push(deepCoby(selfs));
+                        // console.log(deepCoby(selfs));
+                        var nextIndex = indexs[where] + 1;
+                        if (nextIndex < arr.length) {
+                            indexs[where] = nextIndex;
+                            plzh(selfs, arr, indexs, total, where);
+                        } else { //下一个末位末尾
+                            --where;
+                            if (where == -1) {
+                                return;
+                            }
+                            indexs[where] = indexs[where] + 1;
+                            for (var i = where + 1; i < selfs.length; i++) {
+                                indexs[i] = indexs[i - 1] + 1;
+                            }
+                            plzh(selfs, arr, indexs, total, where);
+                        }
+                    }
+                }
+            }
+        }
+        var selfs = new Array(2); //当前的组合[]
+        // var _arr = ['黑', '白', '黄', '红'];
+        // var _arr = [{ a: 1 }, { b: 2 }, { c: 3 }, { d: 4 }];
+        var arr = [1, 2, 3, 4]; //所有组合的基值[]
+        var indexs = [0, 1]; //初始排列,对应的_arr的索引下标为0,1 //当前的组合对应的基值的索引[]
+        var where = 0; //当前排列组合循环的位置
+        var total = []; //排列组合结果
+        console.time("d")
+        plzh(selfs, arr, indexs, total, where);
+        console.timeEnd("d")
+        console.log(total);
+    </script>
+
+
+</body>
+
+</html>
