@@ -13,10 +13,20 @@
 
 <body>
     <button onclick="start()">开始发送坐标</button>
+    <button onclick="stop()">停止发送</button>
 </body>
 <script>
+    var gpslist = []
     function start() {
-        gps = new gps({ name: 'gps', wsUrl: "ws://219.234.147.220:61623" });
+        gps0 = new gps({ name: 'gps', wsUrl: "ws://172.16.100.250:61623", id: 101 });
+        gps1 = new gps({ name: 'gps', wsUrl: "ws://172.16.100.250:61623", id: 102 });
+        gpslist.push(gps0);
+        gpslist.push(gps1);
+    }
+    function stop() {
+        gpslist.forEach(g => {
+            g.stop();
+        })
     }
 </script>
 

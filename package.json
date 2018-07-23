@@ -6,5 +6,6 @@
   },
   "devDependencies": {
     "browser-sync": "^2.18.13"
-  }
+  },
+  "dependencies": {}
 }
